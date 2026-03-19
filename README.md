@@ -44,43 +44,55 @@ Designed to:
 
 Who this template is for:
 
-- Backend engineers building microservices or monolithic APIs
-- Teams who want a standardized, maintainable starting point
-- Developers who prefer TypeScript-first, testable, and modular code
+Live endpoints (in this template):
+
+- `GET /` — returns a simple "Hello World!" from `AuthService.getHello()` (sample placeholder).
+
+Notes: This app is a minimal scaffold demonstrating how to wire controllers/services. Extend with real auth flows (login, register, refresh tokens) as needed.
 
 What it provides:
 
 - Core features (auth, configs, email, redis)
-- Clear module separation for easier ownership and testing
-- Opinionated conventions for environment, logging, and deployment
 
----
+Live endpoints (in this template):
+
+- `GET /` — returns "Hello World!" from `GatewayService.getHello()`.
+- `POST /testMail` — enqueues a test email job via `GatewayService.sendTestEmail()` (uses `EmailService`).
+
+Usage example (after starting Redis and running the gateway):
+
+```bash
+# send test mail request
+curl -X POST http://localhost:3000/testMail
+```
+
+## The gateway demonstrates how to call shared libs (like `@app/email`) from an app.
 
 ## 🏗️ Project Structure (detailed)
 
-Top-level layout (abridged):
-
 ```
 backend/
-├── apps/
-│   ├── auth/           # Auth microservice (controllers, module, main)
-│   └── gateway/        # API gateway (controllers, modules)
 ├── libs/
 │   ├── authentication/ # Auth strategies, guards, decorators
-│   ├── config/         # Centralized config & validation
-│   ├── email/          # Email service, templates, processors
 │   └── redis/          # Redis integration layer
 ├── package.json
 └── README.md
 ```
 
-- The `apps/auth/src` folder implements authentication endpoints and glue to `libs/authentication`.
-
-### Database (Prisma)
-
 This project uses Prisma via the `nestjs-prisma` integration. The generated Prisma client is placed in `generated/prisma` and the schema is located at `prisma/schema.prisma`.
 
-Key points:
+Implementation details in this template:
+
+- The `EmailService` uses `bullmq` to enqueue email jobs (`mail-queue`) instead of sending directly.
+- `EmailService` adds jobs with name `send-mail` and uses a queue named `mail-queue` (see `libs/email/src/email.service.ts`).
+- BullMQ requires Redis to be available — start Redis (via `docker compose up -d`) before sending emails.
+
+To test the email enqueue flow locally:
+
+1. Start local services: `docker compose up -d` (this brings up Redis used by BullMQ).
+2. Start the gateway app: `pnpm --filter ./apps/gateway start:dev`.
+3. POST to `/testMail` (see example above). Check logs for `Enqueued email to ...`.
+   Key points:
 
 - Prisma schema: `prisma/schema.prisma` — modify this to evolve your data model.
 - Generated client: `generated/prisma` — the codebase imports the client from here (run `pnpm prisma generate` to create/update it).
@@ -92,6 +104,19 @@ Developer notes:
 - In CI add `pnpm prisma generate` before build/test steps so the generated client is available.
 - To change output directory update the `generator.client.output` setting in `prisma/schema.prisma` and adjust imports.
 - The `libs/authentication` package contains strategies (`jwt.strategy.ts`, `azure.strategy.ts`, `local.strategy.ts`), guards (`jwt-auth.guard.ts`), decorators (`current-user.decorator.ts`), and interfaces.
+
+Start local infra used by the template (Redis for BullMQ, RabbitMQ if you use it):
+
+```bash
+docker compose up -d
+```
+
+Run the gateway (example):
+
+```bash
+pnpm --filter ./apps/gateway start:dev
+```
+
 - `libs/config` centralizes environment configuration and validation (see `config.service.ts`).
 - `libs/email` includes DTOs, `email.service.ts`, and Handlebars templates used for transactional emails.
 - `libs/redis` provides a thin wrapper to create and inject Redis clients throughout the codebase.
