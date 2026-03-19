@@ -22,10 +22,10 @@ async function bootstrap() {
     }),
   });
   const scalarconfig = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    .setTitle('Enterprise API Gateway')
+    .setDescription('The enterprise API gateway description')
     .setVersion('1.0')
-    .addTag('cats')
+    .addTag('enterprise')
     .addGlobalParameters({
       name: 'X-API-Version',
       in: 'header',
