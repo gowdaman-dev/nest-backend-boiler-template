@@ -3,6 +3,7 @@ import { ConfigService } from './config.service';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { PrismaModule } from 'nestjs-prisma';
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -29,6 +30,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
           limit: 200,
         },
       ],
+    }),
+    PrismaModule.forRoot({
+      isGlobal: true,
     }),
   ],
   providers: [ConfigService],
