@@ -1,17 +1,24 @@
-service:
+version: '3.8'
+services:
   redis:
     image: redis:latest
-    container_name: my-redis
+    container_name: chronexa-redis
     ports:
       - '6379:6379'
     volumes:
       - redis-data:/data
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: my-rabbitmq
+    container_name: chronexa-rabbitmq
     ports:
       - '5672:5672'
       - '15672:15672'
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  rabbitmq-data:
