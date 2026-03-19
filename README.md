@@ -71,26 +71,42 @@ backend/
 │   ├── email/          # Email service, templates, processors
 │   └── redis/          # Redis integration layer
 ├── package.json
-├── tsconfig.json
-├── nest-cli.json
 └── README.md
 ```
 
-Key files you should know about:
-
 - The `apps/auth/src` folder implements authentication endpoints and glue to `libs/authentication`.
+
+### Database (Prisma)
+
+This project uses Prisma via the `nestjs-prisma` integration. The generated Prisma client is placed in `generated/prisma` and the schema is located at `prisma/schema.prisma`.
+
+Key points:
+
+- Prisma schema: `prisma/schema.prisma` — modify this to evolve your data model.
+- Generated client: `generated/prisma` — the codebase imports the client from here (run `pnpm prisma generate` to create/update it).
+- The repo includes `nestjs-prisma` setup (see `libs/config/config.module.ts` where `PrismaModule.forRoot()` is configured).
+
+Developer notes:
+
+- After installing dependencies run `pnpm prisma generate` to produce the client locally.
+- In CI add `pnpm prisma generate` before build/test steps so the generated client is available.
+- To change output directory update the `generator.client.output` setting in `prisma/schema.prisma` and adjust imports.
 - The `libs/authentication` package contains strategies (`jwt.strategy.ts`, `azure.strategy.ts`, `local.strategy.ts`), guards (`jwt-auth.guard.ts`), decorators (`current-user.decorator.ts`), and interfaces.
 - `libs/config` centralizes environment configuration and validation (see `config.service.ts`).
 - `libs/email` includes DTOs, `email.service.ts`, and Handlebars templates used for transactional emails.
 - `libs/redis` provides a thin wrapper to create and inject Redis clients throughout the codebase.
-
-(For exact file references, open the paths under `apps/` and `libs/`.)
 
 ---
 
 ## 📚 Detailed Module Documentation
 
 This section documents the purpose and internals of each major module so maintainers can onboard quickly.
+
+After installing, generate Prisma client (required when using Prisma locally):
+
+```bash
+pnpm prisma generate
+```
 
 ### apps/auth
 
@@ -318,6 +334,36 @@ CMD ["node", "dist/apps/gateway/main.js"]
 ```
 
 ---
+
+### Local dev services with Docker Compose
+
+This repository includes a `docker-compose.yaml` at the project root to quickly bring up local infrastructure services used by the apps (Redis and RabbitMQ).
+
+To start the services in the background:
+
+```bash
+# using Docker Compose v2+ (recommended)
+docker compose up -d
+
+# or with the standalone docker-compose binary
+docker-compose up -d
+```
+
+To stop and remove containers and networks:
+
+```bash
+docker compose down
+# or
+docker-compose down
+```
+
+Notes:
+
+- The compose file exposes Redis on `6379` and the RabbitMQ management UI on port `15672`.
+- Named volumes are declared in the compose file to persist service data across restarts.
+- This compose file is intended for local development only — for production use, run services in your cloud provider or orchestration platform (Kubernetes, ECS, etc.).
+
+If you want to run the full application stack with Docker, create a `docker-compose.override.yml` or extend the compose file to build application images (using the `Dockerfile` above) and wire service dependencies.
 
 ## 🔐 Security & Best Practices
 
